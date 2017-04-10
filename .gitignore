@@ -1,0 +1,9 @@
+*.log
+.idea
+dist/*
+target/
+project/project/
+project/target/
+.cache
+.lib/
+/plsql-lint-server.zip
