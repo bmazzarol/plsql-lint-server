@@ -66,15 +66,6 @@ object PLSQLLintServer extends App {
     case class ServerLocation(root: String, port: Int)
 
     /**
-      * Returns the location to create the server at.
-      *
-      * @return server location
-      */
-    val sl = args match {
-      case Array(root, port) => ServerLocation(root, port.toInt)
-    }
-
-    /**
       * Lints a given file and returns any issues as a json array.
       *
       * @param path path to the file on the editor
@@ -92,7 +83,7 @@ object PLSQLLintServer extends App {
     }
 
     // create a new server on provided root and path
-    Server.basic(sl.root, sl.port) {
+    Server.basic("plsql-lint-server", args.head.toInt) {
       new HttpService(_) {
         def handle: PartialFunction[HttpRequest, Callback[HttpResponse]] = {
           case req@Post on Root / path => req.ok(lintFile(path, req.body.as[InputStream].get), headers)
