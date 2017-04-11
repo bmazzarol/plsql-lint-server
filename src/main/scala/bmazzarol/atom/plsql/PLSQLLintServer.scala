@@ -60,6 +60,7 @@ object PLSQLLintServer extends App {
     /**
       * Location of the server.
       *
+      * @constructor
       * @param root root path
       * @param port port
       */
@@ -86,7 +87,11 @@ object PLSQLLintServer extends App {
     Server.basic("plsql-lint-server", args.head.toInt) {
       new HttpService(_) {
         def handle: PartialFunction[HttpRequest, Callback[HttpResponse]] = {
-          case req@Post on Root / path => req.ok(lintFile(path, req.body.as[InputStream].get), headers)
+          case req@Get on Root / "check-alive" => req.ok("\"ok\"",headers)
+          case req@Get on Root / "shutdown"    =>
+            system.apocalypse()
+            req.ok("\"shutting down...\"",headers)
+          case req@Post on Root / path         => req.ok(lintFile(path, req.body.as[InputStream].get), headers)
         }
       }
     }
