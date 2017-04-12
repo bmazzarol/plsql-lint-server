@@ -11,7 +11,7 @@ This is built against version 2.0.3 of the PL/SQL COP.
 ## Building Project
 The project uses SBT and can be built by calling 
 
-`sbt assemble`
+`sbt universal:packageBin`
 
 This will create a zip file under /target/universal called plsql-lint-server-1.0.zip.
 

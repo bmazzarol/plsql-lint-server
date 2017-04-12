@@ -58,27 +58,18 @@ object PLSQLLintServer extends App {
     val resource = resourceSet.createResource(URI.createURI("sharedResource.sql"))
 
     /**
-      * Location of the server.
-      *
-      * @constructor
-      * @param root root path
-      * @param port port
-      */
-    case class ServerLocation(root: String, port: Int)
-
-    /**
       * Lints a given file and returns any issues as a json array.
       *
-      * @param path path to the file on the editor
       * @param data file data
       * @return linter results
       */
-    def lintFile(path: String, data: InputStream): String = {
+    def lintFile(data: InputStream): String = {
       resource.unload()
       resource.load(data, null)
       s"[${
         validator.validate(resource, CheckMode.ALL, null).map(i => {
-          s"""{"severity":"${i.getSeverity.name().toLowerCase}","location":{"file":"$path","position":[${i.getLineNumber},${i.getColumn}]},"excerpt":"${i.getMessage}"}"""
+          val range = s"[${i.getLineNumber},${i.getColumn}],[${i.getLineNumber}, ${i.getColumn + i.getOffset}]"
+          s"""{"severity":"${i.getSeverity.name().toLowerCase}","location":{"position":[$range]},"excerpt":"${i.getMessage.replace("\"","\\\"")}"}"""
         }).mkString(",")
       }]"
     }
@@ -91,7 +82,7 @@ object PLSQLLintServer extends App {
           case req@Get on Root / "shutdown"    =>
             system.apocalypse()
             req.ok("\"shutting down...\"",headers)
-          case req@Post on Root / path         => req.ok(lintFile(path, req.body.as[InputStream].get), headers)
+          case req@Post on Root / "lint-file"         => req.ok(lintFile(req.body.as[InputStream].get), headers)
         }
       }
     }
