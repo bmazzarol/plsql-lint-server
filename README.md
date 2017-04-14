@@ -3,8 +3,7 @@ A RESTful server wrapper for the [Trivadis PL/SQL Cop](https://www.salvis.com/bl
 
 This implements the [Message v2](http://steelbrain.me/linter/types/linter-message-v2.html) format defined by the Atom Linter.
 
-The server is started with a given name and port and will service request with the format post@/{file-name}/,
-passing the document to lint in the post body.
+The server is started with a given name and port.
 
 This is built against version 2.0.3 of the PL/SQL COP. 
 

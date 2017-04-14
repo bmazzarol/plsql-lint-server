@@ -1,9 +1,11 @@
-package bmazzarol.atom.plsql
+package bmazzarol.plsql
 
-
-import java.io.{ByteArrayInputStream, InputStream}
+import java.io.InputStream
+import java.net.URLDecoder
 
 import akka.actor.ActorSystem
+import bmazzarol.plsql.AST.Message
+import bmazzarol.plsql.HTTPEncoders._
 import colossus._
 import colossus.core._
 import colossus.protocols.http.HttpMethod._
@@ -13,14 +15,14 @@ import colossus.service.Callback
 import colossus.service.Callback.Implicits._
 import com.trivadis.oracle.plsql.validation.{PLSQLJavaValidator, PLSQLValidatorPreferences}
 import com.trivadis.oracle.sqlplus.SQLPLUSStandaloneSetup
+import io.circe.generic.auto._
+import io.circe.syntax._
 import org.eclipse.emf.common.util.URI
 import org.eclipse.xtext.resource.IResourceServiceProvider.Registry
-import org.eclipse.xtext.resource.XtextResourceSet
+import org.eclipse.xtext.resource.{XtextResource, XtextResourceSet}
 import org.eclipse.xtext.validation.CheckMode
 
 import scala.collection.JavaConversions._
-import scala.util.Try
-
 
 /**
   * PLSQL Lint Server.
@@ -32,16 +34,6 @@ object PLSQLLintServer extends App {
     // actor system and io system
     implicit val sys = ActorSystem()
     implicit val system = IOSystem()
-
-    // shared headers
-    val headers = HttpHeaders(HttpHeader(HttpHeaders.ContentType, ContentType.ApplicationJson))
-
-    // shared body decoder
-    implicit val decoder = new HttpBodyDecoder[InputStream] {
-      override def decode(body: Array[Byte]): Try[InputStream] = Try {
-        new ByteArrayInputStream(body)
-      }
-    }
 
     /**
       * Core linting classes.
@@ -55,7 +47,7 @@ object PLSQLLintServer extends App {
     val provider = Registry.INSTANCE.getResourceServiceProvider(URI.createURI("dummy:/example.sql"))
     val validator = provider.getResourceValidator
     val resourceSet = plusInjector.getInstance(classOf[XtextResourceSet])
-    val resource = resourceSet.createResource(URI.createURI("sharedResource.sql"))
+    resourceSet.addLoadOption(XtextResource.OPTION_RESOLVE_ALL, true)
 
     /**
       * Lints a given file and returns any issues as a json array.
@@ -63,26 +55,22 @@ object PLSQLLintServer extends App {
       * @param data file data
       * @return linter results
       */
-    def lintFile(data: InputStream): String = {
+    def lintFile(path: String, data: InputStream): Seq[Message] = {
+      val uri = URI.createURI(path)
+      val resource = if (resourceSet.getURIResourceMap.containsKey(uri)) resourceSet.getResource(uri, false) else resourceSet.createResource(uri)
       resource.unload()
       resource.load(data, null)
-      s"[${
-        validator.validate(resource, CheckMode.ALL, null).map(i => {
-          val range = s"[${i.getLineNumber},${i.getColumn}],[${i.getLineNumber}, ${i.getColumn + i.getOffset}]"
-          s"""{"severity":"${i.getSeverity.name().toLowerCase}","location":{"position":[$range]},"excerpt":"${i.getMessage.replace("\"","\\\"")}"}"""
-        }).mkString(",")
-      }]"
+      validator.validate(resource, CheckMode.ALL, null).flatMap(AST.message(path, _))
     }
 
     // create a new server on provided root and path
     Server.basic("plsql-lint-server", args.head.toInt) {
       new HttpService(_) {
         def handle: PartialFunction[HttpRequest, Callback[HttpResponse]] = {
-          case req@Get on Root / "check-alive" => req.ok("\"ok\"",headers)
-          case req@Get on Root / "shutdown"    =>
-            system.apocalypse()
-            req.ok("\"shutting down...\"",headers)
-          case req@Post on Root / "lint-file"         => req.ok(lintFile(req.body.as[InputStream].get), headers)
+          case req@Get on Root / "version"           => req.ok("1.0".asJson)
+          case req@Get on Root / "check-alive"       => req.ok("ok".asJson)
+          case req@Get on Root / "shutdown"          => system.apocalypse(); req.ok("shutting down...".asJson)
+          case req@Post on Root / "lint-file" / path => req.ok(lintFile(URLDecoder.decode(path, "UTF-8"), req.body.as[InputStream].get).asJson)
         }
       }
     }
