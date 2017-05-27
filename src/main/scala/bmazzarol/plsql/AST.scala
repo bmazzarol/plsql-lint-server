@@ -30,10 +30,10 @@ object AST {
     */
   type Range = ((Int, Int), (Int, Int))
 
-  def range(issue: Issue): Range = {
-    val ln = issue.getLineNumber - 1
-    val cn = issue.getColumn - 1
-    ((ln, cn), (ln, cn + issue.getLength))
+  def range(issue: Issue): Range =  {
+    val ln = Option(issue.getLineNumber).map(_ - 1).getOrElse(1)
+    val cn = Option(issue.getColumn).map(_ - 1).getOrElse(1)
+    ((ln, cn), (ln, cn + Option(issue.getLength).map(_.toInt).getOrElse(0)))
   }
 
   /**
