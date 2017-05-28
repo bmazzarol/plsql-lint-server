@@ -5,16 +5,16 @@ import java.io.{ByteArrayInputStream, InputStream}
 import colossus.protocols.http.{ContentType, HttpBody, HttpBodyDecoder, HttpBodyEncoder, HttpHeader, HttpHeaders}
 import io.circe.Json
 
-import scala.util.Try
+import scala.util._
 
 /**
   * Colossus encoders.
   */
 object HTTPEncoders {
 
-  implicit val decoder = new HttpBodyDecoder[InputStream] {
-    override def decode(body: Array[Byte]): Try[InputStream] = Try {
-      new ByteArrayInputStream(body)
+  implicit val stringDecoder = new HttpBodyDecoder[String] {
+    override def decode(body: Array[Byte]): Try[String] = Try {
+      new String(body, "UTF_8")
     }
   }
 

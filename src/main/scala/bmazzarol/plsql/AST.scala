@@ -30,7 +30,7 @@ object AST {
     */
   type Range = ((Int, Int), (Int, Int))
 
-  def range(issue: Issue): Range =  {
+  def range(issue: Issue): Range = {
     val ln = Option(issue.getLineNumber).map(_ - 1).getOrElse(1)
     val cn = Option(issue.getColumn).map(_ - 1).getOrElse(1)
     ((ln, cn), (ln, cn + Option(issue.getLength).map(_.toInt).getOrElse(0)))
@@ -62,6 +62,31 @@ object AST {
       ))
     case _                                           => None
   }
+
+  /**
+    * Filters to be applied to generated lint messages.
+    *
+    * @param path          optional path to the file the filters are applied to
+    * @param codes         sequence of validation codes to exclude
+    * @param includeGlobal flag to indicate that global filters be included
+    */
+  case class Filters(path: Option[String], codes: Seq[String], includeGlobal: Option[Boolean] = Some(true)) {
+
+    /**
+      * Returns true if the filter is not scoped to a file
+      */
+    lazy val isGlobal: Boolean = path.isEmpty
+  }
+
+  /**
+    * Request for linting a file.
+    *
+    * @param path    path to the file
+    * @param content contents of the file
+    * @param filters filters to apply on validations
+    */
+  case class LintFileRequest(path: String, content: String, filters: Seq[Filters])
+
 }
 
 

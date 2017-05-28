@@ -5,7 +5,7 @@ This implements the [Message v2](http://steelbrain.me/linter/types/linter-messag
 
 The server is started with a given name and port.
 
-This is built against version 2.0.3 of the PL/SQL COP. 
+This is built against version 2.1.1 of the PL/SQL COP. 
 
 ## Building Project
 The project uses SBT and can be built by calling 
@@ -24,3 +24,17 @@ for example on linux call,
 This will require you have java installed on your path.
 
 The server can then access at localhost:9999/
+
+## Server Resources
+The following resources are available.
+
+@GET  /version     - returns the current running version
+
+@GET  /check-alive - returns ok if the server is active
+
+@GET  /shutdown    - kills the running server
+
+@POST /lint-file/  - lints the file contents passed in as the message body returning the validation messages. 
+                           See the [Message v2](http://steelbrain.me/linter/types/linter-message-v2.html) format for more information on what is returned.
+                           
+See the bmazzarol.plsql.AST.LintFileRequest for the json request format to pass to the server.
