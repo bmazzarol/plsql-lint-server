@@ -74,7 +74,7 @@ object PLSQLLintServer extends App {
     def lintFile(req: HttpRequest): HttpResponse = req.body.as[String].map(decode[LintFileRequest](_) match {
       case Left(error) => req.error(s"Failed to lint file. $error".asJson)
       case Right(lr)   =>
-        val uri = URI.createURI(lr.path)
+        val uri = URI.createFileURI(lr.path)
         val resource = if (resourceSet.getURIResourceMap.containsKey(uri)) resourceSet.getResource(uri, false) else resourceSet.createResource(uri)
         resource.unload()
         resource.load(new ByteArrayInputStream(lr.content.getBytes), null)
