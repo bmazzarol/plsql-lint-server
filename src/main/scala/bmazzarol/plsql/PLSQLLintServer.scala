@@ -88,7 +88,7 @@ object PLSQLLintServer extends App {
     Server.basic("plsql-lint-server", args.head.toInt) {
       new HttpService(_) {
         def handle: PartialFunction[HttpRequest, Callback[HttpResponse]] = {
-          case req@Get on Root / "version"     => req.ok("1.0.2".asJson)
+          case req@Get on Root / "version"     => req.ok("1.0.3".asJson)
           case req@Get on Root / "check-alive" => req.ok("ok".asJson)
           case req@Get on Root / "shutdown"    => system.apocalypse(); req.ok("shutting down...".asJson)
           case req@Post on Root / "lint-file"  => lintFile(req)
