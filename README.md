@@ -12,7 +12,7 @@ The project uses SBT and can be built by calling
 
 `sbt universal:packageBin`
 
-This will create a zip file under /target/universal called plsql-lint-server-1.0.zip.
+This will create a zip file under /target/universal called plsql-lint-server-${version}.zip.
 
 ## Running the Server
 After extracting the built zip file the server can be run by calling the correct executable for your environment.
