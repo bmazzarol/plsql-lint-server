@@ -5,7 +5,7 @@ This implements the [Message v2](http://steelbrain.me/linter/types/linter-messag
 
 The server is started with a given name and port.
 
-This is built against version 2.1.1 of the PL/SQL COP. 
+This is built against version 2.1.3 of the PL/SQL COP. 
 
 ## Building Project
 The project uses SBT and can be built by calling 
